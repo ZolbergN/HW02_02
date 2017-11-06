@@ -54,11 +54,11 @@ int main()
 	setlocale(LC_ALL, "rus");
 	try
 	{
-		string ad;
+		string add;
 		cout << "Укажите путь к файлу" << endl;
-		cin >> ad;
+		cin >> add;
 
-		Get(ad);
+		Get(add);
 	}
 	catch (const exception& e)
 	{
