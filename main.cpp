@@ -1,41 +1,95 @@
-#include <experimental/filesystem>
-#include <iostream>
+#include <string>
 #include <cstring>
+#include <iostream>
+#include <fstream>
+#include <boost/filesystem.hpp>
+#include <future>
+
 
 using namespace std;
-namespace fs = experimental::filesystem;
+namespace fs = boost::filesystem;
 
-int main() {
-	setlocale(LC_ALL, "rus");
+string EXPLORER_LOG_PATH = "log.txt";
 
-	try {
-		string address;
-		cout << endl;
-		cout << "Укажите путь к файлу:" << endl;
-		cout << "Пример: 'explorer/file.dat' " << endl << endl;
-		cout << "Ввод:\t";
-		cin >> address;
+//Подсчет размера директории
+double getDirSize(string dirAddress, double size) {
+    fs::path dirPath = dirAddress;
+    fs::path textDir = dirPath.filename();
+    cout << "Finding size of " << textDir << ". Please, wait...\n";
+    if(fs::exists(dirPath)){
+      fs::directory_iterator end_itr;
+      for(fs::directory_iterator dirIte(dirPath); dirIte != end_itr; ++dirIte) {
+        fs::path filePath(dirIte->path());
+        try {
+          if(!fs::is_directory(dirIte->status()))
+          {
+            size = size + fs::file_size(filePath);
+          }
+          else {
+            getDirSize(filePath.string(), size);
+          }
+        }
+        catch(exception& e){
+          cout << e.what() << endl;
+        }
+        //Проверка на то, является ли файл, размер которого мы хотим узнать, директорией
+      }
+    }
+    return size;
+}
 
-		if (!fs::exists(address))
-			throw runtime_error("Ошибка: Такого адреса не существует!");
+string getDirName(string dirAddress) {
+    cout << "Finding name of file or directory. Please, wait...\n" << endl;
+    fs::path dirPath = dirAddress;
+    fs::path textDir = dirPath.filename();
+    return textDir.string();
+}
 
-		const fs::path filePath = address;
+string getDirData(string dirAddress) {
+    cout << "Finding latest modification data. Please, wait...\n" << endl;
+    fs::path dirPath = dirAddress;
+    std::time_t ftime = fs::last_write_time(dirPath);
+    return asctime(gmtime(&ftime));
+}
 
-		const fs::path textFilename = filePath.filename();
+void displayDir(string dirAddress) {
+    //Проверка на существование директории
+    if(!fs::exists(dirAddress)) {
+      throw runtime_error("ERROR: We don't have such directory");
+    }
+    //Проверка на то, является ли файл директорией
+    if(!fs::is_directory(dirAddress)) {
+      throw runtime_error("ERROR: Type of file - not directory");
+    }
 
-		auto ftime = fs::last_write_time(filePath);
+    std::future<string> futureDirName = std::async (getDirName,dirAddress);
+    std::future<string> futureDirData = std::async (getDirData,dirAddress);
+    std::future<double> futureDirSize = std::async (getDirSize,dirAddress, 0);
 
-		time_t cftime = decltype(ftime)::clock::to_time_t(ftime);
+    string dirName = futureDirName.get();
+    string dirData = futureDirData.get();
+    double dirSize = futureDirSize.get();
 
-		cout << endl;
-		cout << "name:\t\t" << textFilename << endl;
-		cout << "size:\t\t" << (double(fs::file_size(filePath)) / 1000) << " Kb" << endl;
-		cout << "date_mod:\t" << std::asctime(std::localtime(&cftime)) << endl;
+    //Запись данных о директории в файл
+    ofstream fout(EXPLORER_LOG_PATH);
+    fout << "Directory name: " << dirName << endl;
+    fout << "Latest modification: " << dirData << endl;
+    fout << "Directory size: " << dirSize/1000 << " Kb" << endl;
+    fout.close();
 
-	}
-	catch (const std::exception& e) {
-		cout << e.what() << endl;
-	}
+}
 
-	return 0;
+
+int main(int argc, char* argv[])
+{
+  printf("%d \n", argc);
+  string ad;
+  ad = argv[1];
+
+  try {
+    displayDir(ad);
+  }
+  catch(const exception& e) {
+    cout << e.what() << endl;
+  }
 }
