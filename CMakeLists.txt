@@ -25,7 +25,7 @@ hunter_add_package(Boost COMPONENTS system filesystem)
 find_package(Boost CONFIG REQUIRED system filesystem)
 
 add_executable(explorer ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-target_link_libraries(${PROJECT_NAME} -pthread -std=c++14 Catch::Catch Boost::system Boost::filesystem)
+target_link_libraries(${PROJECT_NAME} -pthread -std=c++14 Boost::system Boost::filesystem)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/example1/ DESTINATION example1)
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES main.cpp DESTINATION bin)
