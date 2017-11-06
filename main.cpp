@@ -31,10 +31,10 @@ void Get(string address)
 {
 
 	if (fs::is_directory(address))
-		throw runtime_error("Type of file - directory");
+		throw runtime_error("Проверка на дирректорию");
 
 	if (!fs::exists(address))
-		throw runtime_error("File does not find!");
+		throw runtime_error("Файл не найден");
 
 	future<string>futureFileName = async(getFileName, address);
 	future<double>futureFileSize = async(getFileSize, address);
@@ -46,7 +46,7 @@ void Get(string address)
 	
 	cout << "Название файла:\t " << FileName << endl;
 	cout << "Размер:\t " << FileSize << " byte" << endl;
-	cout << "Modification date:\t " << FileDate << endl;
+	cout << "Дата создания:\t " << FileDate << endl;
 }
 
 int main()
